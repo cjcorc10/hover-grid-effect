@@ -14,6 +14,8 @@ export default function Home() {
 
   const gridContainer = useRef<HTMLDivElement | null>(null);
   const [blocksData, setBlocksData] = useState<BlockData[]>([])
+  const [children, setChildren] = useState<JSX.Element[]>();
+
   const config = {
     symbols: ['0', 'X', '*', '>', '$', 'W', '&', '%'],
     blockSize: 25,
@@ -26,10 +28,6 @@ export default function Home() {
   }
 
   const getRandomSymbol = () => config.symbols[Math.floor(Math.random() * config.symbols.length)]
-      
-  const getDimensions = (ref: RefObject<HTMLDivElement | null>) => ({height: ref.current?.getBoundingClientRect().height, width: ref.current?.getBoundingClientRect().width}) 
-
-  const [children, setChildren] = useState<JSX.Element[]>();
   
   const createChildren = (height: number, width: number): JSX.Element[] => {
     const cols = Math.ceil(width / config.blockSize)
@@ -77,8 +75,16 @@ export default function Home() {
 
     let closestBlock = null;
     let distance = Infinity;
-    for(let i in g)
+    for(let i=0; i < blocksData.length; i++) {
+      const dx = blocksData[i].x - x;
+      const dy = blocksData[i].y - y;
+      const dz = Math.sqrt(dx * dx + dy * dy)
 
+      if(dz < distance) {
+        distance = dz;
+        closestBlock = children[i] 
+      }
+    }
 
   }
 
