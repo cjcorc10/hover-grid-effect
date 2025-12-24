@@ -3,9 +3,17 @@ import Image from 'next/image';
 import styles from './main.module.scss'
 import { JSX, RefObject, useRef, useState, useEffect } from 'react';
 
+type BlockData = {
+  x: number,
+  y: number,
+  gridX: number,
+  gridY: number,
+}
+
 export default function Home() {
 
   const gridContainer = useRef<HTMLDivElement | null>(null);
+  const [blocksData, setBlocksData] = useState<BlockData[]>([])
   const config = {
     symbols: ['0', 'X', '*', '>', '$', 'W', '&', '%'],
     blockSize: 25,
@@ -26,8 +34,6 @@ export default function Home() {
   const createChildren = (height: number, width: number): JSX.Element[] => {
     const cols = Math.ceil(width / config.blockSize)
     const rows = Math.ceil(height / config.blockSize)
-
-    const blocksData = []
     const gridBlocks: JSX.Element[] = []
     for (let i = 0; i < cols; i++) {
       for (let k = 0; k < rows; k++) {
@@ -41,7 +47,13 @@ export default function Home() {
         >
           {Math.random() < config.emptyRatio && getRandomSymbol() }
         </div>)
-
+        setBlocksData((prev) => [ ...prev,
+          {
+          x: i * config.blockSize,
+          y: k * config.blockSize,
+          gridX: i,
+          gridY: k,
+        }])
       }
     }
     return gridBlocks;
@@ -62,6 +74,10 @@ export default function Home() {
     const rect = gridContainer.current?.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
+
+    let closestBlock = null;
+    let distance = Infinity;
+    for(let i in g)
 
 
   }
