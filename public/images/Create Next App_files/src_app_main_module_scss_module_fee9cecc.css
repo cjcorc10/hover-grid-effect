@@ -1,0 +1,49 @@
+/* [project]/src/app/main.module.scss.module.css [app-client] (css) */
+body, html {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: IBM Plex Mono, monospace;
+}
+
+.main-module-scss-module__Icqk1G__main .main-module-scss-module__Icqk1G__hero {
+  justify-content: center;
+  align-items: center;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+}
+
+.main-module-scss-module__Icqk1G__main .main-module-scss-module__Icqk1G__hero .main-module-scss-module__Icqk1G__imageContainer {
+  border-radius: 15px;
+  width: 40rem;
+  height: 20rem;
+  position: relative;
+  top: -10vh;
+  overflow: hidden;
+}
+
+.main-module-scss-module__Icqk1G__main .main-module-scss-module__Icqk1G__hero .main-module-scss-module__Icqk1G__imageContainer .main-module-scss-module__Icqk1G__gridOverlay {
+  z-index: 1;
+  background-color: #19191933;
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  inset: 0;
+}
+
+.main-module-scss-module__Icqk1G__main .main-module-scss-module__Icqk1G__hero .main-module-scss-module__Icqk1G__imageContainer .main-module-scss-module__Icqk1G__gridOverlay .main-module-scss-module__Icqk1G__gridBlock {
+  opacity: 0;
+  color: #fff;
+  background-color: #000;
+  justify-content: center;
+  align-items: center;
+  display: flex;
+  position: absolute;
+}
+
+.main-module-scss-module__Icqk1G__main .main-module-scss-module__Icqk1G__hero .main-module-scss-module__Icqk1G__imageContainer .main-module-scss-module__Icqk1G__image {
+  object-fit: cover;
+}
+
+/*# sourceMappingURL=src_app_main_module_scss_module_fee9cecc.css.map*/
