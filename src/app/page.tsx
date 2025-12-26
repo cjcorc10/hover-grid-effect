@@ -41,6 +41,9 @@ export default function Home() {
     if(el && !gridRefs.current?.includes(el))
       gridRefs.current[i] = el
   }
+
+  const getRandomSymbol = () => config.symbols[Math.floor(Math.random() * config.symbols.length)]
+
   
   
   useEffect(() => {
@@ -62,7 +65,10 @@ export default function Home() {
     for (let i = 0; i < cols; i++) {
       for (let k = 0; k < rows; k++) {
 
-        gridBlocks.push(<Block key={`${i}_${k}`} row={k} column={i} addToRefs={(el) => addChildToRefs(el, index++)}/> )
+        gridBlocks.push(<Block key={`${i}_${k}`} row={k} column={i} addToRefs={(el) => addChildToRefs(el, index++)}>
+                    {Math.random() < config.emptyRatio ? getRandomSymbol() : '' }
+
+        </Block> )
           blocksData.push({
             x: i * config.blockSize,
             y: k * config.blockSize,
@@ -124,16 +130,16 @@ export default function Home() {
 }
 
 
-const Block = ({row, column, addToRefs}: {row: number, column: number, addToRefs: (el: HTMLDivElement) => void}) => {
+const Block = ({row, column, addToRefs, children}: {row: number, column: number, addToRefs: (el: HTMLDivElement) => void, children: string}) => {
 
   const [isHovered, setIsHovered] = useState<boolean>(false);
-  const getRandomSymbol = () => config.symbols[Math.floor(Math.random() * config.symbols.length)]
 
   return (
-    <div 
+    <div
+      ref={addToRefs}
       className={`${styles.gridBlock} ${isHovered ? styles.active : ''}`} 
       onMouseOver={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
+      onMouseLeave={() => setTimeout(() => setIsHovered(false), config.blockLifeTime)}
       style={{
         height: `${config.blockSize}px`,
         width: `${config.blockSize}px`,
@@ -141,7 +147,7 @@ const Block = ({row, column, addToRefs}: {row: number, column: number, addToRefs
         left: `${column * config.blockSize}px`,
         }}
         >
-          {Math.random() < config.emptyRatio && getRandomSymbol() }
+          {children}
         </div>
   )
 }
