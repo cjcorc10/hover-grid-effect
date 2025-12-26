@@ -9,71 +9,82 @@ type BlockData = {
   gridX: number,
   gridY: number,
 }
+// config information
+const config = {
+  symbols: ['0', 'X', '*', '>', '$', 'W', '&', '%'],
+  blockSize: 25,
+  detectionRadius: 50,
+  clusterSize: 7,
+  blockLifeTime: 300,
+  emptyRatio: 0.3,
+  scrambleRatio: 0.25,
+  scrambleInterval: 150,
+}
 
 export default function Home() {
 
+  // container for the grid
   const gridContainer = useRef<HTMLDivElement | null>(null);
+
+  // array that holds the x and y data of each block in the grid
   const [blocksData, setBlocksData] = useState<BlockData[]>([])
-  const [children, setChildren] = useState<JSX.Element[]>();
-
-  const config = {
-    symbols: ['0', 'X', '*', '>', '$', 'W', '&', '%'],
-    blockSize: 25,
-    detectionRadius: 50,
-    clusterSize: 7,
-    blockLifeTime: 300,
-    emptyRatio: 0.3,
-    scrambleRatio: 0.25,
-    scrambleInterval: 150,
-  }
-
-  const getRandomSymbol = () => config.symbols[Math.floor(Math.random() * config.symbols.length)]
   
-  const createChildren = (height: number, width: number): JSX.Element[] => {
-    const cols = Math.ceil(width / config.blockSize)
-    const rows = Math.ceil(height / config.blockSize)
-    const gridBlocks: JSX.Element[] = []
-    for (let i = 0; i < cols; i++) {
-      for (let k = 0; k < rows; k++) {
-        gridBlocks.push(<div key={`${i}_${k}`} className={styles.gridBlock} 
-          style={{
-            height: `${config.blockSize}px`,
-            width: `${config.blockSize}px`,
-            top: `${k * config.blockSize}px`,
-            right: `${i * config.blockSize}px`,
-          }}
-        >
-          {Math.random() < config.emptyRatio && getRandomSymbol() }
-        </div>)
-        setBlocksData((prev) => [ ...prev,
-          {
-          x: i * config.blockSize,
-          y: k * config.blockSize,
-          gridX: i,
-          gridY: k,
-        }])
-      }
-    }
-    return gridBlocks;
-  }
+  // array holding the block elements that are rendered
+  const [blocks, setBlocks] = useState<JSX.Element[]>([])
 
+  // current index of block that we are hovering over
+  const [blockIndex, setBlockIndex] = useState<number | null>(null)
+
+  // grid refs to access properties of blocks
+  const gridRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const addChildToRefs = (el: HTMLDivElement | null, i: number) => {
+    if(el && !gridRefs.current?.includes(el))
+      gridRefs.current[i] = el
+  }
+  
+  
   useEffect(() => {
     setTimeout(() => {
       if(!gridContainer.current) return
       const height = gridContainer.current?.getBoundingClientRect().height;
       const width = gridContainer.current?.getBoundingClientRect().width;
-
-      setChildren(() => createChildren(height, width))
+      setBlocks(createChildren(height, width))
     }, 0)
   }, [])
 
+  const createChildren = (height: number, width: number) => {
+    const cols = Math.ceil(width / config.blockSize)
+    const rows = Math.ceil(height / config.blockSize)
+    const gridBlocks: JSX.Element[] = []
+    const blocksData: BlockData[] = []
+
+    let index = 0;
+    for (let i = 0; i < cols; i++) {
+      for (let k = 0; k < rows; k++) {
+
+        gridBlocks.push(<Block key={`${i}_${k}`} row={k} column={i} addToRefs={(el) => addChildToRefs(el, index++)}/> )
+          blocksData.push({
+            x: i * config.blockSize,
+            y: k * config.blockSize,
+            gridX: i,
+            gridY: k,
+          })
+
+        console.log(index)
+      }
+    }
+    setBlocksData(blocksData)
+    console.log(blocksData)
+    console.log(gridRefs)
+    return gridBlocks;
+  }
   const handleMouseMove = (e: React.MouseEvent) => {
     if(!gridContainer.current) return
     const rect = gridContainer.current?.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
 
-    let closestBlock = null;
+    let closestBlockIndex = null;
     let distance = Infinity;
     for(let i=0; i < blocksData.length; i++) {
       const dx = blocksData[i].x - x;
@@ -82,10 +93,16 @@ export default function Home() {
 
       if(dz < distance) {
         distance = dz;
-        closestBlock = children[i] 
+        closestBlockIndex = i 
       }
     }
 
+
+    if(closestBlockIndex && closestBlockIndex !== blockIndex) {
+      gridRefs.current[closestBlockIndex]?.classList.add('active')
+    }
+    
+    
   }
 
   return (
@@ -93,7 +110,7 @@ export default function Home() {
       <section className={styles.hero}>
         <div className={styles.imageContainer}>
           <div className={styles.gridOverlay} ref={gridContainer} onMouseMove={handleMouseMove}>
-          {children}
+          {blocks}
           </div>
           <Image
             src="/images/image1.jpg"
@@ -104,4 +121,27 @@ export default function Home() {
       </section>
     </main>
   );
+}
+
+
+const Block = ({row, column, addToRefs}: {row: number, column: number, addToRefs: (el: HTMLDivElement) => void}) => {
+
+  const [isHovered, setIsHovered] = useState<boolean>(false);
+  const getRandomSymbol = () => config.symbols[Math.floor(Math.random() * config.symbols.length)]
+
+  return (
+    <div 
+      className={`${styles.gridBlock} ${isHovered ? styles.active : ''}`} 
+      onMouseOver={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      style={{
+        height: `${config.blockSize}px`,
+        width: `${config.blockSize}px`,
+        top: `${row * config.blockSize}px`,
+        left: `${column * config.blockSize}px`,
+        }}
+        >
+          {Math.random() < config.emptyRatio && getRandomSymbol() }
+        </div>
+  )
 }

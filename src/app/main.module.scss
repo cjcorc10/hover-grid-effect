@@ -43,6 +43,10 @@ body, html {
                     background-color: black;
                     color: white;
                 }
+                .gridBlock.active {
+                    opacity: 1;
+                }
+                
                 
             }
             .image {
