@@ -53,8 +53,8 @@ export default function Home() {
     for( let i = 0; i < rows; i++) {
       for(let j = 0; j < cols; j++) {
         blocks.push({
-          x: i * config.blockSize,
-          y: j * config.blockSize,
+          x: j * config.blockSize,
+          y: i * config.blockSize,
           row: i,
           column: j,
           active: false,
@@ -83,9 +83,10 @@ export default function Home() {
         closestBlockIndex = i
       }
     }
+
     if(closestBlockIndex)
-    setBlocksData((prev) => [...prev, {
-  ...prev[closestBlockIndex], active: true}])
+    setBlocksData((prev) => [{
+      ...prev[closestBlockIndex], active: true}, ...prev])
     
 
   }
