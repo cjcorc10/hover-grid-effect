@@ -6,8 +6,8 @@ import { JSX, RefObject, useRef, useState, useEffect } from 'react';
 type BlockData = {
   x: number,
   y: number,
-  gridX: number,
-  gridY: number,
+  row: number,
+  column: number,
 }
 // config information
 const config = {
@@ -28,19 +28,8 @@ export default function Home() {
 
   // array that holds the x and y data of each block in the grid
   const [blocksData, setBlocksData] = useState<BlockData[]>([])
-  
-  // array holding the block elements that are rendered
-  const [blocks, setBlocks] = useState<JSX.Element[]>([])
 
-  // current index of block that we are hovering over
-  const [blockIndex, setBlockIndex] = useState<number | null>(null)
 
-  // grid refs to access properties of blocks
-  const gridRefs = useRef<(HTMLDivElement | null)[]>([]);
-  const addChildToRefs = (el: HTMLDivElement | null, i: number) => {
-    if(el && !gridRefs.current?.includes(el))
-      gridRefs.current[i] = el
-  }
 
   const getRandomSymbol = () => config.symbols[Math.floor(Math.random() * config.symbols.length)]
 
@@ -51,38 +40,25 @@ export default function Home() {
       if(!gridContainer.current) return
       const height = gridContainer.current?.getBoundingClientRect().height;
       const width = gridContainer.current?.getBoundingClientRect().width;
-      setBlocks(createChildren(height, width))
+      createChildren(height, width)
     }, 0)
   }, [])
 
   const createChildren = (height: number, width: number) => {
     const cols = Math.ceil(width / config.blockSize)
     const rows = Math.ceil(height / config.blockSize)
-    const gridBlocks: JSX.Element[] = []
-    const blocksData: BlockData[] = []
 
-    let index = 0;
-    for (let i = 0; i < cols; i++) {
-      for (let k = 0; k < rows; k++) {
+    for( let i = 0; i < rows; i++) {
+      for(let j = 0; j < cols; j++) {
 
-        gridBlocks.push(<Block key={`${i}_${k}`} row={k} column={i} addToRefs={(el) => addChildToRefs(el, index++)}>
-                    {Math.random() < config.emptyRatio ? getRandomSymbol() : '' }
-
-        </Block> )
-          blocksData.push({
-            x: i * config.blockSize,
-            y: k * config.blockSize,
-            gridX: i,
-            gridY: k,
-          })
-
-        console.log(index)
-      }
+        setBlocksData((prev) => [...prev, {
+          x: i * config.blockSize,
+          y: j * config.blockSize,
+          row: i,
+          column: j,
+        }])
     }
-    setBlocksData(blocksData)
-    console.log(blocksData)
-    console.log(gridRefs)
-    return gridBlocks;
+  }
   }
   const handleMouseMove = (e: React.MouseEvent) => {
     if(!gridContainer.current) return
@@ -99,16 +75,11 @@ export default function Home() {
 
       if(dz < distance) {
         distance = dz;
-        closestBlockIndex = i 
+        closestBlockIndex = i
       }
     }
-
-
-    if(closestBlockIndex && closestBlockIndex !== blockIndex) {
-      gridRefs.current[closestBlockIndex]?.classList.add('active')
-    }
     
-    
+
   }
 
   return (
@@ -116,7 +87,11 @@ export default function Home() {
       <section className={styles.hero}>
         <div className={styles.imageContainer}>
           <div className={styles.gridOverlay} ref={gridContainer} onMouseMove={handleMouseMove}>
-          {blocks}
+          {blocksData.map((block, i) => (
+            <Block key={i} {...block}>
+              {Math.random() < config.emptyRatio ? getRandomSymbol() : ''}
+            </Block>
+          ))}
           </div>
           <Image
             src="/images/image1.jpg"
@@ -130,13 +105,19 @@ export default function Home() {
 }
 
 
-const Block = ({row, column, addToRefs, children}: {row: number, column: number, addToRefs: (el: HTMLDivElement) => void, children: string}) => {
+
+type BlockProps = {
+  row: number,
+  column: number
+  children: string,
+}
+
+export const Block = ({row, column, children}: BlockProps) => {
 
   const [isHovered, setIsHovered] = useState<boolean>(false);
 
   return (
     <div
-      ref={addToRefs}
       className={`${styles.gridBlock} ${isHovered ? styles.active : ''}`} 
       onMouseOver={() => setIsHovered(true)}
       onMouseLeave={() => setTimeout(() => setIsHovered(false), config.blockLifeTime)}
