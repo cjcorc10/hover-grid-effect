@@ -2,15 +2,8 @@
 import Image from 'next/image';
 import styles from './main.module.scss'
 import { JSX, RefObject, useRef, useState, useEffect } from 'react';
+import { BlockData } from './data/types';
 
-type BlockData = {
-  x: number,
-  y: number,
-  row: number,
-  column: number,
-  active: boolean,
-  symbol: string,
-}
 // config information
 const config = {
   symbols: ['0', 'X', '*', '>', '$', 'W', '&', '%'],
@@ -27,7 +20,6 @@ export default function Home() {
 
   // container for the grid
   const gridContainer = useRef<HTMLDivElement | null>(null);
-
   // array that holds the x and y data of each block in the grid
   const [blocksData, setBlocksData] = useState<BlockData[]>([])
 
@@ -59,6 +51,7 @@ export default function Home() {
           column: j,
           active: false,
           symbol: Math.random() < config.emptyRatio ? getRandomSymbol() : '',
+          timeout: null,
         })
         
     }
@@ -84,10 +77,21 @@ export default function Home() {
       }
     }
 
-    if(closestBlockIndex)
-    setBlocksData((prev) => [{
-      ...prev[closestBlockIndex], active: true}, ...prev])
-    
+    if(closestBlockIndex) {
+      setBlocksData((prev) => {
+        const shallow = [...prev]
+        shallow[closestBlockIndex] = {...shallow[closestBlockIndex], active: true, timeout: Date.now()}
+        return shallow;
+      })
+      setTimeout(() => {
+        setBlocksData((prev) => {
+          const shallow = [...prev]
+          shallow[closestBlockIndex] = {...shallow[closestBlockIndex], active: false, timeout: null}
+          return shallow;
+        })
+      }, config.blockLifeTime)
+    }
+
 
   }
 
@@ -124,13 +128,9 @@ type BlockProps = {
 
 export const Block = ({row, column, active, children}: BlockProps) => {
 
-  const [isHovered, setIsHovered] = useState<boolean>(false);
-
   return (
     <div
       className={`${styles.gridBlock} ${active ? styles.active : ''}`} 
-      // onMouseOver={() => setIsHovered(true)}
-      // onMouseLeave={() => setTimeout(() => setIsHovered(false), config.blockLifeTime)}
       style={{
         height: `${config.blockSize}px`,
         width: `${config.blockSize}px`,
