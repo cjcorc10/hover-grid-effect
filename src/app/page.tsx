@@ -29,8 +29,6 @@ export default function Home() {
   // array that holds the x and y data of each block in the grid
   const [blocksData, setBlocksData] = useState<BlockData[]>([])
 
-
-
   const getRandomSymbol = () => config.symbols[Math.floor(Math.random() * config.symbols.length)]
 
   
@@ -44,21 +42,24 @@ export default function Home() {
     }, 0)
   }, [])
 
+  // function to populate gridData array
   const createChildren = (height: number, width: number) => {
     const cols = Math.ceil(width / config.blockSize)
     const rows = Math.ceil(height / config.blockSize)
 
+    const blocks: BlockData[] = []
     for( let i = 0; i < rows; i++) {
       for(let j = 0; j < cols; j++) {
-
-        setBlocksData((prev) => [...prev, {
+        blocks.push({
           x: i * config.blockSize,
           y: j * config.blockSize,
           row: i,
           column: j,
-        }])
+        })
+        
     }
   }
+  setBlocksData(blocks)
   }
   const handleMouseMove = (e: React.MouseEvent) => {
     if(!gridContainer.current) return
