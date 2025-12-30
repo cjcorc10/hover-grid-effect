@@ -8,6 +8,8 @@ type BlockData = {
   y: number,
   row: number,
   column: number,
+  active: boolean,
+  symbol: string,
 }
 // config information
 const config = {
@@ -55,6 +57,8 @@ export default function Home() {
           y: j * config.blockSize,
           row: i,
           column: j,
+          active: false,
+          symbol: Math.random() < config.emptyRatio ? getRandomSymbol() : '',
         })
         
     }
@@ -79,6 +83,9 @@ export default function Home() {
         closestBlockIndex = i
       }
     }
+    if(closestBlockIndex)
+    setBlocksData((prev) => [...prev, {
+  ...prev[closestBlockIndex], active: true}])
     
 
   }
@@ -90,7 +97,7 @@ export default function Home() {
           <div className={styles.gridOverlay} ref={gridContainer} onMouseMove={handleMouseMove}>
           {blocksData.map((block, i) => (
             <Block key={i} {...block}>
-              {Math.random() < config.emptyRatio ? getRandomSymbol() : ''}
+              {block.symbol}
             </Block>
           ))}
           </div>
@@ -109,19 +116,20 @@ export default function Home() {
 
 type BlockProps = {
   row: number,
-  column: number
+  column: number,
+  active: boolean,
   children: string,
 }
 
-export const Block = ({row, column, children}: BlockProps) => {
+export const Block = ({row, column, active, children}: BlockProps) => {
 
   const [isHovered, setIsHovered] = useState<boolean>(false);
 
   return (
     <div
-      className={`${styles.gridBlock} ${isHovered ? styles.active : ''}`} 
-      onMouseOver={() => setIsHovered(true)}
-      onMouseLeave={() => setTimeout(() => setIsHovered(false), config.blockLifeTime)}
+      className={`${styles.gridBlock} ${active ? styles.active : ''}`} 
+      // onMouseOver={() => setIsHovered(true)}
+      // onMouseLeave={() => setTimeout(() => setIsHovered(false), config.blockLifeTime)}
       style={{
         height: `${config.blockSize}px`,
         width: `${config.blockSize}px`,
