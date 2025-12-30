@@ -10,7 +10,7 @@ const config = {
   blockSize: 25,
   detectionRadius: 50,
   clusterSize: 7,
-  blockLifeTime: 300,
+  blockLifeTime: 1000,
   emptyRatio: 0.3,
   scrambleRatio: 0.25,
   scrambleInterval: 150,
@@ -64,34 +64,38 @@ export default function Home() {
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
 
-    let closestBlockIndex = null;
+    let closestBlockIndexes = [];
     let distance = Infinity;
     for(let i=0; i < blocksData.length; i++) {
       const dx = blocksData[i].x - x;
       const dy = blocksData[i].y - y;
       const dz = Math.sqrt(dx * dx + dy * dy)
 
-      if(dz < distance) {
+      if(dz < distance && dz < config.detectionRadius) {
         distance = dz;
-        closestBlockIndex = i
+        closestBlockIndexes.push(i)
+        console.log(dz)
       }
     }
 
-    if(closestBlockIndex) {
-      setBlocksData((prev) => {
-        const shallow = [...prev]
-        shallow[closestBlockIndex] = {...shallow[closestBlockIndex], active: true, timeout: Date.now()}
-        return shallow;
-      })
-      setTimeout(() => {
+    if(closestBlockIndexes) {
+      closestBlockIndexes.forEach(closestBlockIndex => {
+
         setBlocksData((prev) => {
           const shallow = [...prev]
-          shallow[closestBlockIndex] = {...shallow[closestBlockIndex], active: false, timeout: null}
+          shallow[closestBlockIndex] = {...shallow[closestBlockIndex], active: true, timeout: Date.now()}
           return shallow;
         })
-      }, config.blockLifeTime)
-    }
-
+        setTimeout(() => {
+          setBlocksData((prev) => {
+            const shallow = [...prev]
+            shallow[closestBlockIndex] = {...shallow[closestBlockIndex], active: false, timeout: null}
+            return shallow;
+          })
+        }, config.blockLifeTime)
+      })
+      }
+      
 
   }
 
