@@ -1,4 +1,3 @@
-import { useCallback } from 'react';
 import { BlockData } from '../data/types';
 import {
   findClosestBlock,
@@ -12,71 +11,65 @@ export const useGridAnimation = (
   updateBlockData: (index: number, updates: any) => void,
   getRandomSymbol: () => string
 ) => {
-  const animateBlock = useCallback(
-    (index: number) => {
-      // activate closest block
-      updateBlockData(index, { active: true, timeout: Date.now() });
+  const animateBlock = (index: number) => {
+    // activate closest block
+    updateBlockData(index, { active: true, timeout: Date.now() });
 
-      // set timer for block
-      setTimeout(() => {
-        updateBlockData(index, { active: false, timeout: null });
-      }, config.blockLifeTime);
+    // set timer for block
+    setTimeout(() => {
+      updateBlockData(index, { active: false, timeout: null });
+    }, config.blockLifeTime);
 
-      // scramble block
-      if (
-        blocksData[index].shouldScramble &&
-        !blocksData[index].scrambleInterval
-      ) {
-        const interval = setInterval(
-          () => updateBlockData(index, { symbol: getRandomSymbol() }),
-          config.scrambleInterval
-        );
-        updateBlockData(index, { interval });
-      }
-    },
-    [blocksData, updateBlockData, getRandomSymbol]
-  );
-
-  const animateCluster = useCallback(
-    (startIndex: number) => {
-      animateBlock(startIndex);
-
-      const clusterCount = Math.floor(Math.random() * config.clusterSize) + 1;
-      let currentBlock = blocksData[startIndex];
-
-      for (let i = 0; i < clusterCount; i++) {
-        const neighborIndexes = getNeighborIndexes(currentBlock, blocksData);
-
-        if (!neighborIndexes.length) break;
-
-        const randomIndex = getRandomElement(neighborIndexes);
-        animateBlock(randomIndex);
-
-        currentBlock = blocksData[randomIndex];
-      }
-    },
-    [blocksData, animateBlock]
-  );
-
-  const handleMouseMove = useCallback(
-    (e: React.MouseEvent, gridContainer: React.RefObject<HTMLDivElement>) => {
-      if (!gridContainer.current) return;
-      const rect = gridContainer.current?.getBoundingClientRect();
-      const mouseX = e.clientX - rect.left;
-      const mouseY = e.clientY - rect.top;
-
-      const { index: closestBlockIndex, distance } = findClosestBlock(
-        mouseX,
-        mouseY,
-        blocksData
+    // scramble block
+    if (
+      blocksData[index].shouldScramble &&
+      !blocksData[index].scrambleInterval
+    ) {
+      const interval = setInterval(
+        () => updateBlockData(index, { symbol: getRandomSymbol() }),
+        config.scrambleInterval
       );
+      updateBlockData(index, { interval });
+    }
+  };
 
-      if (closestBlockIndex !== null && distance < config.detectionRadius) {
-        animateCluster(closestBlockIndex);
-      }
-    },
-    [blocksData, animateCluster]
-  );
+  const animateCluster = (startIndex: number) => {
+    animateBlock(startIndex);
+
+    const clusterCount = Math.floor(Math.random() * config.clusterSize) + 1;
+    let currentBlock = blocksData[startIndex];
+
+    for (let i = 0; i < clusterCount; i++) {
+      const neighborIndexes = getNeighborIndexes(currentBlock, blocksData);
+
+      if (!neighborIndexes.length) break;
+
+      const randomIndex = getRandomElement(neighborIndexes);
+      animateBlock(randomIndex);
+
+      currentBlock = blocksData[randomIndex];
+    }
+  };
+
+  const handleMouseMove = (
+    e: React.MouseEvent,
+    gridContainer: React.RefObject<HTMLDivElement>
+  ) => {
+    if (!gridContainer.current) return;
+    const rect = gridContainer.current?.getBoundingClientRect();
+    const mouseX = e.clientX - rect.left;
+    const mouseY = e.clientY - rect.top;
+
+    const { index: closestBlockIndex, distance } = findClosestBlock(
+      mouseX,
+      mouseY,
+      blocksData
+    );
+
+    if (closestBlockIndex !== null && distance < config.detectionRadius) {
+      animateCluster(closestBlockIndex);
+    }
+  };
 
   return {
     handleMouseMove,
