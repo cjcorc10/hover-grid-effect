@@ -3,6 +3,7 @@ import Image from 'next/image';
 import styles from './main.module.scss'
 import { JSX, RefObject, useRef, useState, useEffect } from 'react';
 import { BlockData } from './data/types';
+import { getNextFlightSegmentPath } from 'next/dist/client/flight-data-helpers';
 
 // config information
 const config = {
@@ -16,6 +17,7 @@ const config = {
   scrambleInterval: 150,
 }
 
+
 export default function Home() {
 
   // container for the grid
@@ -25,7 +27,7 @@ export default function Home() {
 
   const getRandomSymbol = () => config.symbols[Math.floor(Math.random() * config.symbols.length)]
 
-  
+
   
   useEffect(() => {
     setTimeout(() => {
@@ -47,8 +49,8 @@ export default function Home() {
         blocks.push({
           x: j * config.blockSize,
           y: i * config.blockSize,
-          row: i,
-          column: j,
+          gridY: i,
+          gridX: j,
           active: false,
           symbol: Math.random() < config.emptyRatio ? getRandomSymbol() : '',
           timeout: null,
@@ -60,6 +62,34 @@ export default function Home() {
   }
   setBlocksData(blocks)
   }
+
+
+  const updateBlockData = (index: number, updates: any) => {
+    setBlocksData((prev) => {
+      const shallow = [...prev];
+      shallow[index] = {...shallow[index], ...updates}
+      return shallow;
+    })
+  }
+
+  const animateBlock = (index: number) => {
+  // activate closest block
+  updateBlockData(index, {active: true, timeout: Date.now()})
+        
+  // set timer for block
+  setTimeout(() => {
+    updateBlockData(index, {active: false, timeout: null})
+  }, config.blockLifeTime)
+
+  // scramble block
+  if(blocksData[index].shouldScramble && !blocksData[index].scrambleInterval) {
+    const interval = setInterval(() => (
+      updateBlockData(index, {symbol: getRandomSymbol()})
+    ), config.scrambleInterval)
+    updateBlockData(index, {interval})
+  }  
+  }
+
   const handleMouseMove = (e: React.MouseEvent) => {
     if(!gridContainer.current) return
     const rect = gridContainer.current?.getBoundingClientRect();
@@ -79,42 +109,38 @@ export default function Home() {
       }
     }
 
-    // activate block
     if(closestBlockIndex && distance < config.detectionRadius) {
-      // activate closest block
-        setBlocksData((prev) => {
-          const shallow = [...prev]
-          shallow[closestBlockIndex] = {...shallow[closestBlockIndex], active: true, timeout: Date.now()}
-          return shallow;
-        })
-        // set timer for block
-        setTimeout(() => {
-          setBlocksData((prev) => {
-            const shallow = [...prev]
-            shallow[closestBlockIndex] = {...shallow[closestBlockIndex], active: false, timeout: null}
-            return shallow;
-          })
-        }, config.blockLifeTime)
+        animateBlock(closestBlockIndex)
 
-        if(blocksData[closestBlockIndex].shouldScramble && !blocksData[closestBlockIndex].scrambleInterval) {
-          const interval = setInterval(() => (
-            setBlocksData((prev) => {
-              const shallow = [...prev]
-              shallow[closestBlockIndex].symbol = getRandomSymbol()
-              return shallow
-            })
-          ), config.scrambleInterval)
-          
-          setBlocksData((prev) => {
-            const shallow = [...prev]
-            shallow[closestBlockIndex].scrambleInterval = interval
-            return shallow
+
+        const clusterCount = Math.floor(Math.random() * config.clusterSize) + 1
+        let blockIndexes = [closestBlockIndex]
+        let currentBlock = blocksData[closestBlockIndex]
+
+        for(let i=0; i < clusterCount; i++) {
+          // get neighbor blocks 
+          const neighborIndexes = blocksData.map((block, i) => {
+            if(block === currentBlock) return -1
+            const dx = Math.abs(currentBlock.gridX - block.gridX)
+            const dy = Math.abs(currentBlock.gridY - block.gridY)
+
+            if(dx <= 1 && dy <= 1) return i
+            else return -1
           })
+          .filter(index => index != -1)
+          
+          if(!neighborIndexes.length) break
+          
+          const randomIndex = neighborIndexes[Math.floor(Math.random() * neighborIndexes.length)]
+          animateBlock(randomIndex)          
+
+
+          currentBlock = blocksData[randomIndex]
         }
-      }
-      
-    
+        
+      } 
   }
+
 
   return (
     <main className={styles.main}>
@@ -141,13 +167,13 @@ export default function Home() {
 
 
 type BlockProps = {
-  row: number,
-  column: number,
+  y: number,
+  x: number,
   active: boolean,
   children: string,
 }
 
-export const Block = ({row, column, active, children}: BlockProps) => {
+export const Block = ({y, x, active, children}: BlockProps) => {
 
   return (
     <div
@@ -155,8 +181,8 @@ export const Block = ({row, column, active, children}: BlockProps) => {
       style={{
         height: `${config.blockSize}px`,
         width: `${config.blockSize}px`,
-        top: `${row * config.blockSize}px`,
-        left: `${column * config.blockSize}px`,
+        top: `${y}px`,
+        left: `${x}px`,
         }}
         >
           {children}
