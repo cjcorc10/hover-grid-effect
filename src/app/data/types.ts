@@ -1,4 +1,5 @@
 
+
 export type BlockData = {
     x: number,
     y: number,
@@ -7,4 +8,6 @@ export type BlockData = {
     active: boolean,
     symbol: string,
     timeout: number | null,
+    shouldScramble: boolean,
+    scrambleInterval: NodeJS.Timeout | null,
   }

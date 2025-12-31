@@ -52,6 +52,8 @@ export default function Home() {
           active: false,
           symbol: Math.random() < config.emptyRatio ? getRandomSymbol() : '',
           timeout: null,
+          shouldScramble: Math.random() < config.scrambleRatio,
+          scrambleInterval: null,
         })
         
     }
@@ -64,28 +66,28 @@ export default function Home() {
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
 
-    let closestBlockIndexes = [];
+    let closestBlockIndex = null;
     let distance = Infinity;
     for(let i=0; i < blocksData.length; i++) {
       const dx = blocksData[i].x - x;
       const dy = blocksData[i].y - y;
       const dz = Math.sqrt(dx * dx + dy * dy)
 
-      if(dz < distance && dz < config.detectionRadius) {
+      if(dz < distance ) {
         distance = dz;
-        closestBlockIndexes.push(i)
-        console.log(dz)
+        closestBlockIndex = i
       }
     }
 
-    if(closestBlockIndexes) {
-      closestBlockIndexes.forEach(closestBlockIndex => {
-
+    // activate block
+    if(closestBlockIndex && distance < config.detectionRadius) {
+      // activate closest block
         setBlocksData((prev) => {
           const shallow = [...prev]
           shallow[closestBlockIndex] = {...shallow[closestBlockIndex], active: true, timeout: Date.now()}
           return shallow;
         })
+        // set timer for block
         setTimeout(() => {
           setBlocksData((prev) => {
             const shallow = [...prev]
@@ -93,10 +95,25 @@ export default function Home() {
             return shallow;
           })
         }, config.blockLifeTime)
-      })
+
+        if(blocksData[closestBlockIndex].shouldScramble && !blocksData[closestBlockIndex].scrambleInterval) {
+          const interval = setInterval(() => (
+            setBlocksData((prev) => {
+              const shallow = [...prev]
+              shallow[closestBlockIndex].symbol = getRandomSymbol()
+              return shallow
+            })
+          ), config.scrambleInterval)
+          
+          setBlocksData((prev) => {
+            const shallow = [...prev]
+            shallow[closestBlockIndex].scrambleInterval = interval
+            return shallow
+          })
+        }
       }
       
-
+    
   }
 
   return (
