@@ -14,6 +14,11 @@ export const useGridBlocks = (
 
   const getRandomSymbol = () => getRandomElement(config.symbols);
 
+  const getInitialSymbol = () =>
+    Math.random() < config.emptyRatio ? getRandomSymbol() : '';
+
+  const shouldScrambleBlock = () => Math.random() < config.scrambleRatio;
+
   const createChildren = (height: number, width: number) => {
     const { cols, rows } = calculateGridDimensions(
       width,
@@ -31,9 +36,9 @@ export const useGridBlocks = (
           gridY,
           gridX,
           active: false,
-          symbol: Math.random() < config.emptyRatio ? getRandomSymbol() : '',
+          symbol: getInitialSymbol(),
           timeout: null,
-          shouldScramble: Math.random() < config.scrambleRatio,
+          shouldScramble: shouldScrambleBlock(),
           scrambleInterval: null,
         });
       }
