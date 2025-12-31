@@ -16,6 +16,100 @@ const config = {
   scrambleInterval: 150,
 };
 
+// Math utility functions
+const calculateEuclideanDistance = (
+  x1: number,
+  y1: number,
+  x2: number,
+  y2: number
+): number => {
+  const dx = x1 - x2;
+  const dy = y1 - y2;
+  return Math.sqrt(dx * dx + dy * dy);
+};
+
+const calculateGridDimensions = (
+  width: number,
+  height: number,
+  blockSize: number
+) => ({
+  cols: Math.ceil(width / blockSize),
+  rows: Math.ceil(height / blockSize),
+});
+
+const gridToPixelCoordinates = (
+  gridX: number,
+  gridY: number,
+  blockSize: number
+) => ({
+  x: gridX * blockSize,
+  y: gridY * blockSize,
+});
+
+const isNeighbor = (
+  gridX1: number,
+  gridY1: number,
+  gridX2: number,
+  gridY2: number
+): boolean => {
+  const dx = Math.abs(gridX1 - gridX2);
+  const dy = Math.abs(gridY1 - gridY2);
+  return dx <= 1 && dy <= 1;
+};
+
+const findClosestBlock = (
+  mouseX: number,
+  mouseY: number,
+  blocks: BlockData[]
+): { index: number | null; distance: number } => {
+  let closestBlockIndex = null;
+  let distance = Infinity;
+
+  for (let i = 0; i < blocks.length; i++) {
+    const blockDistance = calculateEuclideanDistance(
+      blocks[i].x,
+      blocks[i].y,
+      mouseX,
+      mouseY
+    );
+
+    if (blockDistance < distance) {
+      distance = blockDistance;
+      closestBlockIndex = i;
+    }
+  }
+
+  return { index: closestBlockIndex, distance };
+};
+
+const getNeighborIndexes = (
+  currentBlock: BlockData,
+  allBlocks: BlockData[]
+): number[] => {
+  return allBlocks
+    .map((block, i) => {
+      if (block === currentBlock) return -1;
+
+      if (
+        isNeighbor(
+          currentBlock.gridX,
+          currentBlock.gridY,
+          block.gridX,
+          block.gridY
+        )
+      ) {
+        return i;
+      } else {
+        return -1;
+      }
+    })
+    .filter((index) => index !== -1);
+};
+
+const getRandomElement = <T,>(array: T[]): T => {
+  return array[Math.floor(Math.random() * array.length)];
+};
+
 export default function Home() {
   // container for the grid
   const gridContainer = useRef<HTMLDivElement | null>(null);
@@ -27,22 +121,23 @@ export default function Home() {
 
   // function to populate gridData array
   const createChildren = (height: number, width: number) => {
-    const cols = Math.ceil(width / config.blockSize);
-    const rows = Math.ceil(height / config.blockSize);
+    const { cols, rows } = calculateGridDimensions(
+      width,
+      height,
+      config.blockSize
+    );
 
     const blocks: BlockData[] = [];
     for (let i = 0; i < rows; i++) {
       for (let j = 0; j < cols; j++) {
+        const { x, y } = gridToPixelCoordinates(j, i, config.blockSize);
         blocks.push({
-          x: j * config.blockSize,
-          y: i * config.blockSize,
+          x,
+          y,
           gridY: i,
           gridX: j,
           active: false,
-          symbol:
-            Math.random() < config.emptyRatio
-              ? getRandomSymbol()
-              : '',
+          symbol: Math.random() < config.emptyRatio ? getRandomSymbol() : '',
           timeout: null,
           shouldScramble: Math.random() < config.scrambleRatio,
           scrambleInterval: null,
@@ -55,10 +150,8 @@ export default function Home() {
   useEffect(() => {
     setTimeout(() => {
       if (!gridContainer.current) return;
-      const height =
-        gridContainer.current?.getBoundingClientRect().height;
-      const width =
-        gridContainer.current?.getBoundingClientRect().width;
+      const height = gridContainer.current?.getBoundingClientRect().height;
+      const width = gridContainer.current?.getBoundingClientRect().width;
       createChildren(height, width);
     }, 0);
   }, []);
@@ -93,56 +186,38 @@ export default function Home() {
     }
   };
 
+  const animateCluster = (startIndex: number) => {
+    animateBlock(startIndex);
+
+    const clusterCount = Math.floor(Math.random() * config.clusterSize) + 1;
+    let currentBlock = blocksData[startIndex];
+
+    for (let i = 0; i < clusterCount; i++) {
+      const neighborIndexes = getNeighborIndexes(currentBlock, blocksData);
+
+      if (!neighborIndexes.length) break;
+
+      const randomIndex = getRandomElement(neighborIndexes);
+      animateBlock(randomIndex);
+
+      currentBlock = blocksData[randomIndex];
+    }
+  };
+
   const handleMouseMove = (e: React.MouseEvent) => {
     if (!gridContainer.current) return;
     const rect = gridContainer.current?.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    const mouseX = e.clientX - rect.left;
+    const mouseY = e.clientY - rect.top;
 
-    let closestBlockIndex = null;
-    let distance = Infinity;
-    for (let i = 0; i < blocksData.length; i++) {
-      const dx = blocksData[i].x - x;
-      const dy = blocksData[i].y - y;
-      const dz = Math.sqrt(dx * dx + dy * dy);
+    const { index: closestBlockIndex, distance } = findClosestBlock(
+      mouseX,
+      mouseY,
+      blocksData
+    );
 
-      if (dz < distance) {
-        distance = dz;
-        closestBlockIndex = i;
-      }
-    }
-
-    if (closestBlockIndex && distance < config.detectionRadius) {
-      animateBlock(closestBlockIndex);
-
-      const clusterCount =
-        Math.floor(Math.random() * config.clusterSize) + 1;
-      let blockIndexes = [closestBlockIndex];
-      let currentBlock = blocksData[closestBlockIndex];
-
-      for (let i = 0; i < clusterCount; i++) {
-        // get neighbor blocks
-        const neighborIndexes = blocksData
-          .map((block, i) => {
-            if (block === currentBlock) return -1;
-            const dx = Math.abs(currentBlock.gridX - block.gridX);
-            const dy = Math.abs(currentBlock.gridY - block.gridY);
-
-            if (dx <= 1 && dy <= 1) return i;
-            else return -1;
-          })
-          .filter((index) => index != -1);
-
-        if (!neighborIndexes.length) break;
-
-        const randomIndex =
-          neighborIndexes[
-            Math.floor(Math.random() * neighborIndexes.length)
-          ];
-        animateBlock(randomIndex);
-
-        currentBlock = blocksData[randomIndex];
-      }
+    if (closestBlockIndex !== null && distance < config.detectionRadius) {
+      animateCluster(closestBlockIndex);
     }
   };
 
