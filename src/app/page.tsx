@@ -8,13 +8,8 @@ import { useGridAnimation } from './hooks/useGridAnimation';
 
 export default function Home() {
   const gridContainer = useRef<HTMLDivElement>(null!);
-  const { blocksData, updateBlockData, getRandomSymbol } =
-    useGridBlocks(gridContainer);
-  const { handleMouseMove } = useGridAnimation(
-    blocksData,
-    updateBlockData,
-    getRandomSymbol
-  );
+  const { blocksData, updateBlockData } = useGridBlocks(gridContainer);
+  const { handleMouseMove } = useGridAnimation(blocksData, updateBlockData);
 
   return (
     <main className={styles.main}>

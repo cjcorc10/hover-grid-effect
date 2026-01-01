@@ -2,14 +2,14 @@ import { BlockData } from '../data/types';
 import {
   findClosestBlock,
   getNeighborIndexes,
-  getRandomElement,
   config,
+  getRandomElement,
+  getRandomSymbol,
 } from '../utils/grid';
 
 export const useGridAnimation = (
   blocksData: BlockData[],
-  updateBlockData: (index: number, updates: any) => void,
-  getRandomSymbol: () => string
+  updateBlockData: (index: number, updates: any) => void
 ) => {
   const animateBlock = (index: number) => {
     // activate closest block

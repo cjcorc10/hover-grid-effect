@@ -3,16 +3,14 @@ import { BlockData } from '../data/types';
 import {
   calculateGridDimensions,
   gridToPixelCoordinates,
-  getRandomElement,
   config,
+  getRandomSymbol,
 } from '../utils/grid';
 
 export const useGridBlocks = (
   gridContainer: React.RefObject<HTMLDivElement>
 ) => {
   const [blocksData, setBlocksData] = useState<BlockData[]>([]);
-
-  const getRandomSymbol = () => getRandomElement(config.symbols);
 
   const getInitialSymbol = () =>
     Math.random() < config.emptyRatio ? getRandomSymbol() : '';
@@ -64,6 +62,5 @@ export const useGridBlocks = (
   return {
     blocksData,
     updateBlockData,
-    getRandomSymbol,
   };
 };
