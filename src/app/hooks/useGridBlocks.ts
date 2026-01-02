@@ -36,6 +36,7 @@ export const useGridBlocks = (
           active: false,
           symbol: getInitialSymbol(),
           timeout: null,
+          timeoutId: null,
           shouldScramble: shouldScrambleBlock(),
           scrambleInterval: null,
         });

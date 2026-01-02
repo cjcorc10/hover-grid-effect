@@ -12,13 +12,19 @@ export const useGridAnimation = (
   updateBlockData: (index: number, updates: any) => void
 ) => {
   const animateBlock = (index: number) => {
+
+    if(blocksData[index].timeoutId) clearTimeout(blocksData[index].timeoutId)
+    
     // activate closest block
     updateBlockData(index, { active: true, timeout: Date.now() });
 
+    
     // set timer for block
-    setTimeout(() => {
+    const timeoutId = setTimeout(() => {
       updateBlockData(index, { active: false, timeout: null });
     }, config.blockLifeTime);
+
+    updateBlockData(index, { timeoutId })
 
     // scramble block
     if (
