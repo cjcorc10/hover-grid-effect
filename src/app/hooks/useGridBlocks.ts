@@ -1,0 +1,66 @@
+import { useState, useEffect } from 'react';
+import { BlockData } from '../data/types';
+import {
+  calculateGridDimensions,
+  gridToPixelCoordinates,
+  config,
+  getRandomSymbol,
+} from '../utils/grid';
+
+export const useGridBlocks = (
+  gridContainer: React.RefObject<HTMLDivElement>
+) => {
+  const [blocksData, setBlocksData] = useState<BlockData[]>([]);
+
+  const getInitialSymbol = () =>
+    Math.random() < config.emptyRatio ? getRandomSymbol() : '';
+
+  const shouldScrambleBlock = () => Math.random() < config.scrambleRatio;
+
+  const createChildren = (height: number, width: number) => {
+    const { cols, rows } = calculateGridDimensions(
+      width,
+      height,
+      config.blockSize
+    );
+
+    const blocks: BlockData[] = [];
+    for (let gridY = 0; gridY < rows; gridY++) {
+      for (let gridX = 0; gridX < cols; gridX++) {
+        const { x, y } = gridToPixelCoordinates(gridX, gridY, config.blockSize);
+        blocks.push({
+          x,
+          y,
+          gridY,
+          gridX,
+          active: false,
+          symbol: getInitialSymbol(),
+          timeout: null,
+          shouldScramble: shouldScrambleBlock(),
+          scrambleInterval: null,
+        });
+      }
+    }
+    setBlocksData(blocks);
+  };
+
+  useEffect(() => {
+    if (!gridContainer.current) return;
+    const height = gridContainer.current.getBoundingClientRect().height;
+    const width = gridContainer.current.getBoundingClientRect().width;
+    createChildren(height, width);
+  }, []);
+
+  const updateBlockData = (index: number, updates: any) => {
+    setBlocksData((prev) => {
+      const shallow = [...prev];
+      shallow[index] = { ...shallow[index], ...updates };
+      return shallow;
+    });
+  };
+
+  return {
+    blocksData,
+    updateBlockData,
+  };
+};
